@@ -27,6 +27,9 @@ namespace ChessChallenge.Application
         int gameID;
         bool isPlaying;
         Board board;
+        int totalMovesPlayed = 0;
+        public int trueTotalMovesPlayed = 0;
+
         public ChessPlayer PlayerWhite { get; private set; }
         public ChessPlayer PlayerBlack {get;private set;}
 
@@ -110,6 +113,8 @@ namespace ChessChallenge.Application
             // Start
             isPlaying = true;
             NotifyTurnToMove();
+
+            trueTotalMovesPlayed += totalMovesPlayed;
         }
 
         void BotThinkerThread()
@@ -142,11 +147,14 @@ namespace ChessChallenge.Application
 
         Move GetBotMove()
         {
-            API.Board botBoard = new(board);
+            // Board b = new Board();
+            // b.LoadPosition(FenUtility.CurrentFen(board));
+            API.Board botBoard = new(new(board));
             try
             {
-                API.Timer timer = new(PlayerToMove.TimeRemainingMs, PlayerNotOnMove.TimeRemainingMs, GameDurationMilliseconds);
+                API.Timer timer = new(PlayerToMove.TimeRemainingMs);
                 API.Move move = PlayerToMove.Bot.Think(botBoard, timer);
+                totalMovesPlayed++;
                 return new Move(move.RawValue);
             }
             catch (Exception e)
@@ -414,8 +422,6 @@ namespace ChessChallenge.Application
 
 
         ChessPlayer PlayerToMove => board.IsWhiteToMove ? PlayerWhite : PlayerBlack;
-        ChessPlayer PlayerNotOnMove => board.IsWhiteToMove ? PlayerBlack : PlayerWhite;
-
         public int TotalGameCount => botMatchStartFens.Length * 2;
         public int CurrGameNumber => Math.Min(TotalGameCount, botMatchGameIndex + 1);
         public string AllPGNs => pgns.ToString();
